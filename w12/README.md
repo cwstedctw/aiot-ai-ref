@@ -13,6 +13,8 @@
 
 ## 二、兩條線的格式（ESP32 那邊，原始碼在 `esp32/`）
 
+> ESP32 板子本身（元件與腳位、開機畫面、一個元件一個元件怎麼檢查、故障對照）寫在 **[`esp32/README.md`](esp32/README.md)**。學生問「ESP32 是不是壞了」時讀那份。
+
 | | WiFi：第 10 課 `esp32/d10_wifi_web.py` | 藍牙：第 11 課 `esp32/d11_ble_remote.py` |
 |---|---|---|
 | 怎麼連 | ESP32 自己開基地台：名稱 `maker-XXXX`、密碼 `makerXXXX`、網址 `http://192.168.4.1`（XXXX 看 OLED） | 藍牙名稱 `maker-XXXX`（OLED 第二行） |
@@ -110,6 +112,8 @@ nmcli device wifi connect maker-XXXX password makerXXXX
 | 夜燈一直亮 | 教室比較暗，光線數字接近門檻 1000（只有 WiFi 線讀得到光線） | 先遮一次光、看數字往哪走，再把 `LIGHT_DARK` 調小 |
 | 時間顯示 5 月、紀錄檔檔名是 5 月的日期 | 板子沒有外網，時鐘停在映像檔的日期 | 正常，不影響量延遲 |
 | SSH 突然斷線 | 用的是板子在 WiFi 上的 IP | 改用 USB：`ssh arduino@192.168.7.2` |
+
+ESP32 這邊的故障（OLED 全黑、某顆燈不亮、溫度一直 `null`、模式切不過去）見 [`esp32/README.md`](esp32/README.md) 第八節。
 
 ## 七、這週的作業（學生要自己做）
 
