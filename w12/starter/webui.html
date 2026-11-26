@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>W12 板子儀表板</title>
+<style>
+:root{
+  --bg:#FAF8F2; --surface:#FFFFFF; --surface-2:#F1F5F4; --ink:#132525; --ink-soft:#3E5656; --mist:#5E7676;
+  --line:#D6E2E1; --teal:#0E7C7B; --teal-tint:#E2F0EF; --gold:#D9A441; --gold-deep:#7A5510; --gold-tint:#FBF0D9;
+  --dark:#062524; --red:#B4553F; --red-tint:#F7E4DE; --violet:#5B4B9A; --violet-tint:#ECE8F7;
+  --off:#C9D3D2; --pcb:#1F6B4E; --pcb-edge:#134733; --sky:#F3F7F6;
+  --zh:"Noto Sans TC","Microsoft JhengHei","PingFang TC","Noto Sans CJK TC","Heiti TC",system-ui,sans-serif;
+  --mono:Consolas,"Cascadia Mono","SF Mono",Menlo,"DejaVu Sans Mono",monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0B1A1A; --surface:#112424; --surface-2:#173030; --ink:#E6F2F2; --ink-soft:#BBD0CF; --mist:#8FA9A8;
+    --line:#26403F; --teal:#5CC8C6; --teal-tint:#123A39; --gold:#E8B85A; --gold-deep:#F3D08A; --gold-tint:#3A2F18;
+    --dark:#041716; --red:#E58B74; --red-tint:#3A2019; --violet:#B7A8EE; --violet-tint:#2A2445;
+    --off:#2E4645; --pcb:#2E9468; --pcb-edge:#1C6B4A; --sky:#0F2121;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0B1A1A; --surface:#112424; --surface-2:#173030; --ink:#E6F2F2; --ink-soft:#BBD0CF; --mist:#8FA9A8;
+  --line:#26403F; --teal:#5CC8C6; --teal-tint:#123A39; --gold:#E8B85A; --gold-deep:#F3D08A; --gold-tint:#3A2F18;
+  --dark:#041716; --red:#E58B74; --red-tint:#3A2019; --violet:#B7A8EE; --violet-tint:#2A2445;
+  --off:#2E4645; --pcb:#2E9468; --pcb-edge:#1C6B4A; --sky:#0F2121;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--zh);font-size:17px;line-height:1.6;overflow-x:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+header{background:var(--dark);color:#E6F2F2}
+header .in{max-width:1180px;margin:0 auto;padding:12px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px}
+header h1{margin:0;font-size:clamp(20px,3vw,28px);font-weight:900;line-height:1.3}
+header .kicker{font-weight:800;font-size:13px;letter-spacing:.16em;color:var(--gold)}
+.spacer{flex:1 1 auto}
+.linkbadge{display:flex;align-items:center;gap:8px;font:700 16px/1.3 var(--mono);background:rgba(255,255,255,.1);border-radius:10px;padding:6px 12px;max-width:100%;overflow-wrap:anywhere}
+.dot{width:12px;height:12px;border-radius:50%;background:#8FA9A8;flex:0 0 auto}
+.dot.on{background:#4FD08A}.dot.bad{background:#E58B74}
+.themebtn{border:1px solid rgba(255,255,255,.3);background:transparent;color:#E6F2F2;border-radius:10px;padding:4px 10px;font-size:14px}
+nav.tabs{max-width:1180px;margin:0 auto;padding:12px 16px 0;display:flex;gap:8px}
+nav.tabs button{border:1px solid var(--line);background:var(--surface-2);border-radius:12px 12px 0 0;padding:8px 22px;font-size:18px;font-weight:800;color:var(--ink-soft)}
+nav.tabs button[aria-selected="true"]{background:var(--surface);color:var(--teal);border-bottom-color:var(--surface)}
+main{max-width:1180px;margin:0 auto;padding:0 16px 60px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:0 16px 16px 16px;padding:16px}
+.banner{display:none;margin:0 0 12px;padding:10px 14px;border-left:5px solid var(--red);background:var(--red-tint);border-radius:0 10px 10px 0;font-weight:800}
+.banner.show{display:block}
+.note{margin:0 0 12px;padding:10px 14px;border-left:5px solid var(--gold);background:var(--gold-tint);border-radius:0 10px 10px 0;font-weight:700}
+.statusline{display:flex;flex-wrap:wrap;gap:4px 18px;color:var(--mist);font-size:15px;margin:0 0 12px}
+.statusline b{color:var(--ink)}
+.statusline .err{color:var(--red);font-weight:800}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+@media (max-width:540px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}}
+.card{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-width:0;position:relative}
+.card h2{margin:0;font-size:16px;font-weight:800;color:var(--ink-soft);display:flex;align-items:center;gap:8px}
+.card h2 svg{width:22px;height:22px;flex:0 0 auto}
+.big{font:800 clamp(38px,5.4vw,60px)/1.1 var(--zh);margin:6px 0 2px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.big small{font-size:.45em;font-weight:700;color:var(--mist);margin-left:4px}
+.sub{font-size:14px;color:var(--mist);min-height:1.4em}
+.card.na{opacity:.55;filter:grayscale(1)}
+.card.na .big{color:var(--mist)}
+.card.stale .big{opacity:.55}
+.na-msg{display:none;font-weight:800;color:var(--ink-soft);font-size:15px;margin-top:6px}
+.card.na .na-msg{display:block}
+.card.na .val{display:none}
+.hbar{height:18px;border-radius:999px;background:var(--bg);border:1px solid var(--line);overflow:hidden;margin-top:8px}
+.hbar i{display:block;height:100%;width:0;background:var(--teal)}
+.hbar.knob i{background:var(--violet)}
+.scale{display:flex;justify-content:space-between;font:12px var(--mono);color:var(--mist)}
+.leds{display:flex;gap:14px;margin-top:8px;flex-wrap:wrap}
+.led{display:flex;flex-direction:column;align-items:center;font-size:14px;color:var(--ink-soft);font-weight:700}
+.led svg{width:52px;height:52px}
+.rgbsw{display:flex;align-items:center;gap:12px;margin-top:8px}
+.rgbsw svg{width:58px;height:58px;flex:0 0 auto}
+.rgbsw .t{font:700 15px/1.4 var(--mono)}
+.wide{grid-column:1/-1}
+.chartwrap{display:flex;flex-wrap:wrap;gap:12px;align-items:stretch;margin-top:8px}
+.chartwrap canvas{flex:1 1 320px;min-width:0;width:100%;height:220px;background:var(--bg);border:1px solid var(--line);border-radius:10px}
+.stats{flex:0 0 190px;display:grid;grid-template-columns:1fr;gap:6px}
+@media (max-width:540px){.stats{flex:1 1 100%;grid-template-columns:repeat(3,1fr)}}
+.stat{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:6px 10px}
+.stat .k{font-size:13px;color:var(--mist);font-weight:700}
+.stat .v{font:800 26px/1.2 var(--zh);font-variant-numeric:tabular-nums;white-space:nowrap}
+.stat .v small{font-size:13px;color:var(--mist);margin-left:2px}
+.btnstate{display:inline-block;margin-top:8px;padding:6px 16px;border-radius:10px;background:var(--bg);border:2px solid var(--line);font-weight:800;font-size:18px}
+.btnstate.hit{background:var(--gold);border-color:var(--gold);color:#1a1206}
+/* 遊戲 */
+.gamebar{display:flex;flex-wrap:wrap;gap:8px 22px;align-items:baseline;margin:0 0 10px}
+.gamebar .k{color:var(--mist);font-size:15px;font-weight:700}
+.gamebar .v{font:800 clamp(30px,4.4vw,46px)/1.1 var(--zh);font-variant-numeric:tabular-nums}
+.gamebar .who{font-size:clamp(18px,2.4vw,24px);font-weight:800;color:var(--teal)}
+#game{display:block;width:100%;height:auto;aspect-ratio:800/300;border-radius:12px;border:1px solid var(--line);background:var(--sky);touch-action:manipulation;cursor:pointer;user-select:none;-webkit-user-select:none}
+.fxlog{margin-top:8px;font-size:14px;color:var(--mist);min-height:1.5em}
+.help{margin-top:6px;font-size:15px;color:var(--ink-soft)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <div class="in">
+    <div>
+      <div class="kicker">AIoT W12・UNO Q 網頁</div>
+      <h1>ESP32 傳來的資料，和一個用 A 鍵玩的小遊戲</h1>
+    </div>
+    <div class="spacer"></div>
+    <div class="linkbadge" title="連法與對象"><span class="dot" id="dot"></span><span id="linkText">連線中…</span></div>
+    <button class="themebtn" id="themeBtn" type="button" aria-label="切換深淺色">深淺色</button>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" id="tab-dash" aria-selected="true" aria-controls="p-dash" type="button">儀表板</button>
+  <button role="tab" id="tab-game" aria-selected="false" aria-controls="p-game" type="button">遊戲</button>
+</nav>
+
+<main>
+  <div class="banner" id="lost">跟 UNO Q 斷線了，重新連線中…</div>
+
+  <!-- 儀表板 -->
+  <section class="panel" id="p-dash" role="tabpanel" aria-labelledby="tab-dash">
+    <div class="statusline">
+      <span>伺服程式第 <b id="tVal">—</b> 秒的資料</span>
+      <span id="ageVal">還沒收到資料</span>
+      <span id="errVal" class="err"></span>
+    </div>
+    <div class="grid">
+      <div class="card" data-has="temp" id="c-temp">
+        <h2><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="18" r="4" fill="var(--red)"/><rect x="11" y="8" width="2" height="8" fill="var(--red)"/></svg>溫度</h2>
+        <div class="val"><div class="big" id="v-temp">—<small>°C</small></div><div class="sub">DHT11，約 2 秒更新一次</div></div>
+        <div class="na-msg"></div>
+      </div>
+      <div class="card" data-has="hum" id="c-hum">
+        <h2><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 C8 8 5 11 5 15 a7 7 0 0 0 14 0 C19 11 16 8 12 2Z" fill="var(--teal)"/></svg>濕度</h2>
+        <div class="val"><div class="big" id="v-hum">—<small>%</small></div><div class="sub">相對濕度</div></div>
+        <div class="na-msg"></div>
+      </div>
+      <div class="card" data-has="light" id="c-light">
+        <h2><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="var(--gold)"/><g stroke="var(--gold)" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1.5" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22.5"/><line x1="1.5" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22.5" y2="12"/><line x1="4.6" y1="4.6" x2="6.3" y2="6.3"/><line x1="17.7" y1="17.7" x2="19.4" y2="19.4"/><line x1="4.6" y1="19.4" x2="6.3" y2="17.7"/><line x1="17.7" y1="6.3" x2="19.4" y2="4.6"/></g></svg>光線</h2>
+        <div class="val"><div class="big" id="v-light">—</div><div class="hbar"><i id="b-light"></i></div><div class="scale"><span>0 暗</span><span>4095</span></div></div>
+        <div class="na-msg"></div>
+      </div>
+      <div class="card" data-has="knob" id="c-knob">
+        <h2><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="var(--violet)" stroke-width="2.5"/><line x1="12" y1="12" x2="17" y2="6" stroke="var(--violet)" stroke-width="2.5" stroke-linecap="round"/></svg>旋鈕</h2>
+        <div class="val"><div class="big" id="v-knob">—</div><div class="hbar knob"><i id="b-knob"></i></div><div class="scale"><span>0</span><span>4095</span></div></div>
+        <div class="na-msg"></div>
+      </div>
+      <div class="card" data-has="leds" id="c-leds">
+        <h2><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="3.5" fill="#E0443A"/><circle cx="12" cy="12" r="3.5" fill="#F2C230"/><circle cx="19" cy="12" r="3.5" fill="#2FB45A"/></svg>三顆燈</h2>
+        <div class="val">
+          <div class="leds">
+            <div class="led"><svg viewBox="0 0 52 52"><circle id="l-red" cx="26" cy="26" r="20" fill="var(--off)" stroke="var(--line)" stroke-width="3"/></svg><span>紅燈・<b id="s-red">—</b></span></div>
+            <div class="led"><svg viewBox="0 0 52 52"><circle id="l-yellow" cx="26" cy="26" r="20" fill="var(--off)" stroke="var(--line)" stroke-width="3"/></svg><span>黃燈・<b id="s-yellow">—</b></span></div>
+            <div class="led"><svg viewBox="0 0 52 52"><circle id="l-green" cx="26" cy="26" r="20" fill="var(--off)" stroke="var(--line)" stroke-width="3"/></svg><span>綠燈・<b id="s-green">—</b></span></div>
+          </div>
+          <div class="sub">綠燈在第 10 課程式裡叫 blue</div>
+        </div>
+        <div class="na-msg"></div>
+      </div>
+      <div class="card" data-has="leds" id="c-rgb">
+        <h2><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="10" r="5" fill="#E0443A" opacity=".8"/><circle cx="15" cy="10" r="5" fill="#2FB45A" opacity=".8"/><circle cx="12" cy="15" r="5" fill="#3A7BE0" opacity=".8"/></svg>彩色燈</h2>
+        <div class="val">
+          <div class="rgbsw"><svg viewBox="0 0 58 58"><circle id="l-rgb" cx="29" cy="29" r="24" fill="var(--off)" stroke="var(--line)" stroke-width="3"/></svg><div class="t" id="v-rgb">R —<br>G —<br>B —</div></div>
+        </div>
+        <div class="na-msg"></div>
+      </div>
+      <div class="card" data-has="button" id="c-btn">
+        <h2><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="13" r="3.5" fill="var(--gold)"/></svg>A 鍵</h2>
+        <div class="val"><div class="btnstate" id="v-btn">還沒按過</div><div class="sub" id="v-btncount">按下 0 次</div></div>
+        <div class="na-msg"></div>
+      </div>
+      <div class="card" id="c-req" data-field="requests">
+        <h2><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>請求數</h2>
+        <div class="val"><div class="big" id="v-req">—</div><div class="sub">ESP32 開機後回答過幾次</div></div>
+        <div class="na-msg"></div>
+      </div>
+      <div class="card" id="c-rtt">
+        <h2><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="13" x2="12" y2="8" stroke="var(--teal)" stroke-width="2.5" stroke-linecap="round"/><rect x="10" y="2" width="4" height="2.5" fill="currentColor"/></svg>來回毫秒</h2>
+        <div class="val"><div class="big" id="v-rtt">—<small>ms</small></div><div class="sub">問一次、等到回答的時間</div></div>
+        <div class="na-msg"></div>
+      </div>
+      <div class="card wide" id="c-chart">
+        <h2><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="2,18 7,12 11,15 16,6 22,10" fill="none" stroke="var(--teal)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/></svg>最近 60 筆來回毫秒</h2>
+        <div class="chartwrap">
+          <canvas id="rttChart" aria-label="來回毫秒折線圖"></canvas>
+          <div class="stats">
+            <div class="stat"><div class="k">中位數</div><div class="v" id="st-med">—</div></div>
+            <div class="stat"><div class="k">最快</div><div class="v" id="st-min">—</div></div>
+            <div class="stat"><div class="k">最慢</div><div class="v" id="st-max">—</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 遊戲 -->
+  <section class="panel" id="p-game" role="tabpanel" aria-labelledby="tab-game" hidden>
+    <div class="note" id="noBtnNote" hidden>WiFi 這條線讀不到按鍵，ESP32 當不了搖桿——換藍牙那條線再來（現在先用空白鍵）</div>
+    <div class="gamebar">
+      <div><div class="k">分數</div><div class="v" id="g-score">0</div></div>
+      <div><div class="k">最高分</div><div class="v" id="g-best">0</div></div>
+      <div><div class="k">上一次跳是誰按的</div><div class="who" id="g-who">還沒有人按</div></div>
+    </div>
+    <canvas id="game" width="800" height="300" aria-label="跳躍小遊戲：按 A 鍵、空白鍵或點畫面跳起來"></canvas>
+    <div class="help">按 ESP32 的 A 鍵、鍵盤空白鍵或點一下畫面：跳起來，躲過電子零件。每跳過一個得 1 分，越來越快。</div>
+    <div class="fxlog" id="fxlog"></div>
+  </section>
+</main>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+
+/* ---------- 深淺色 ---------- */
+var root = document.documentElement;
+try { var saved = localStorage.getItem("w12-theme"); if (saved === "light" || saved === "dark") root.setAttribute("data-theme", saved); } catch(e){}
+$("themeBtn").addEventListener("click", function(){
+  var cur = root.getAttribute("data-theme");
+  if (!cur) cur = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  var next = cur === "dark" ? "light" : "dark";
+  root.setAttribute("data-theme", next);
+  try { localStorage.setItem("w12-theme", next); } catch(e){}
+  refreshColors(); drawChart();
+});
+var C = {};
+function refreshColors(){
+  var cs = getComputedStyle(root);
+  ["--ink","--mist","--line","--teal","--gold","--red","--bg","--sky","--pcb","--pcb-edge","--surface-2","--violet"].forEach(function(k){ C[k] = cs.getPropertyValue(k).trim(); });
+}
+refreshColors();
+try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function(){ refreshColors(); drawChart(); }); } catch(e){}
+
+/* ---------- 分頁 ---------- */
+var activeTab = "dash";
+function showTab(name){
+  activeTab = name;
+  $("tab-dash").setAttribute("aria-selected", name === "dash");
+  $("tab-game").setAttribute("aria-selected", name === "game");
+  $("p-dash").hidden = name !== "dash";
+  $("p-game").hidden = name !== "game";
+  if (name === "dash") { pauseGame(); drawChart(); } else { resumeGame(); }
+}
+$("tab-dash").addEventListener("click", function(){ showTab("dash"); });
+$("tab-game").addEventListener("click", function(){ showTab("game"); });
+
+/* ---------- 連線狀態 ---------- */
+var info = { link:null, target:null, has:null };
+var last = null, lastAt = 0, btnCount = 0;
+var LINK_NAME = { "wifi":"wifi", "ble":"ble", "ble-sim":"ble-sim" };
+
+function naText(){
+  if (info.link === "wifi") return "這條線讀不到（換藍牙）";
+  if (info.link === "ble" || info.link === "ble-sim") return "這條線讀不到（換 WiFi）";
+  return "這條線讀不到（換 WiFi／藍牙）";
+}
+function applyHas(){
+  var has = info.has || {};
+  var cards = document.querySelectorAll(".card[data-has]");
+  for (var i = 0; i < cards.length; i++){
+    var k = cards[i].getAttribute("data-has");
+    var na = has[k] === false;
+    cards[i].classList.toggle("na", na);
+    cards[i].querySelector(".na-msg").textContent = na ? naText() : "";
+  }
+  $("noBtnNote").hidden = has.button !== false;
+}
+function isNum(v){ return typeof v === "number" && isFinite(v); }
+function fmt(v, d){ return isNum(v) ? (d ? v.toFixed(d) : String(Math.round(v))) : "—"; }
+function setBig(id, v, unit, d){
+  $(id).innerHTML = "";
+  $(id).appendChild(document.createTextNode(fmt(v, d)));
+  if (unit){ var s = document.createElement("small"); s.textContent = unit; $(id).appendChild(s); }
+}
+function setBar(id, v){ $(id).style.width = isNum(v) ? Math.max(0, Math.min(100, v / 4095 * 100)) + "%" : "0"; }
+var LED_ON = { red:"#E0443A", yellow:"#F2C230", green:"#2FB45A" };
+function setLed(name, v){
+  var el = $("l-" + name);
+  if (v === true){ el.setAttribute("fill", LED_ON[name]); $("s-" + name).textContent = "亮"; }
+  else if (v === false){ el.setAttribute("fill", "var(--off)"); $("s-" + name).textContent = "滅"; }
+  else { el.setAttribute("fill", "var(--off)"); $("s-" + name).textContent = "—"; }
+}
+function setRgb(v){
+  var ok = Array.isArray(v) && v.length >= 3 && v.every(isNum);
+  if (!ok){ $("l-rgb").setAttribute("fill", "var(--off)"); $("v-rgb").innerHTML = "R —<br>G —<br>B —"; return; }
+  var r = Math.round(v[0]), g = Math.round(v[1]), b = Math.round(v[2]);
+  $("l-rgb").setAttribute("fill", (r|g|b) ? "rgb(" + r + "," + g + "," + b + ")" : "var(--off)");
+  $("v-rgb").innerHTML = "R " + r + "<br>G " + g + "<br>B " + b + ((r|g|b) ? "" : "<br>（熄）");
+}
+
+/* 來回毫秒 */
+var rtts = [];
+function median(a){ var s = a.slice().sort(function(x,y){return x-y;}); var n = s.length; return n % 2 ? s[(n-1)/2] : (s[n/2-1] + s[n/2]) / 2; }
+function setStat(id, v){ $(id).innerHTML = isNum(v) ? Math.round(v) + "<small>ms</small>" : "—"; }
+function drawChart(){
+  var cv = $("rttChart");
+  if (!cv.offsetWidth) return;
+  var dpr = window.devicePixelRatio || 1;
+  var W = cv.offsetWidth, H = cv.offsetHeight;
+  if (cv.width !== Math.round(W*dpr) || cv.height !== Math.round(H*dpr)){ cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr); }
+  var x = cv.getContext("2d");
+  x.setTransform(dpr,0,0,dpr,0,0);
+  x.clearRect(0,0,W,H);
+  var padL = 52, padR = 12, padT = 14, padB = 26;
+  x.font = "13px " + getComputedStyle(document.body).fontFamily;
+  if (!rtts.length){
+    x.fillStyle = C["--mist"]; x.textAlign = "center"; x.textBaseline = "middle";
+    x.fillText("等第一筆資料…", W/2, H/2);
+    setStat("st-med"); setStat("st-min"); setStat("st-max");
+    return;
+  }
+  var mx = Math.max.apply(null, rtts), mn = Math.min.apply(null, rtts);
+  var top = Math.max(10, mx * 1.15);
+  var step = top > 2000 ? 500 : top > 800 ? 200 : top > 300 ? 100 : top > 100 ? 50 : 10;
+  top = Math.ceil(top / step) * step;
+  x.strokeStyle = C["--line"]; x.fillStyle = C["--mist"]; x.lineWidth = 1;
+  x.textAlign = "right"; x.textBaseline = "middle";
+  for (var v = 0; v <= top; v += step){
+    var y = padT + (H - padT - padB) * (1 - v / top);
+    x.beginPath(); x.moveTo(padL, y); x.lineTo(W - padR, y); x.stroke();
+    x.fillText(v, padL - 6, y);
+  }
+  x.textAlign = "left"; x.textBaseline = "top"; x.fillText("ms", 4, 2);
+  x.textAlign = "center"; x.textBaseline = "top";
+  x.fillText("← 比較早", padL + 40, H - padB + 6); x.fillText("最新 →", W - padR - 30, H - padB + 6);
+  var n = 60, dx = (W - padL - padR) / (n - 1), off = n - rtts.length;
+  var med = median(rtts), ym = padT + (H - padT - padB) * (1 - med / top);
+  x.setLineDash([6,5]); x.strokeStyle = C["--gold"]; x.lineWidth = 2;
+  x.beginPath(); x.moveTo(padL, ym); x.lineTo(W - padR, ym); x.stroke(); x.setLineDash([]);
+  x.strokeStyle = C["--teal"]; x.lineWidth = 2.5; x.lineJoin = "round";
+  x.beginPath();
+  rtts.forEach(function(r, i){
+    var px = padL + (off + i) * dx, py = padT + (H - padT - padB) * (1 - r / top);
+    if (i) x.lineTo(px, py); else x.moveTo(px, py);
+  });
+  x.stroke();
+  var lx = padL + (n - 1) * dx, ly = padT + (H - padT - padB) * (1 - rtts[rtts.length-1] / top);
+  x.fillStyle = C["--teal"]; x.beginPath(); x.arc(lx, ly, 4.5, 0, Math.PI*2); x.fill();
+  setStat("st-med", med); setStat("st-min", mn); setStat("st-max", mx);
+}
+window.addEventListener("resize", drawChart);
+
+function onSensors(d){
+  if (isNum(d.t)) $("tVal").textContent = Math.round(d.t);
+  lastAt = Date.now();
+  if (d.ok === false){
+    $("errVal").textContent = "這一次讀取失敗：" + (d.error ? String(d.error) : "原因不明") + "（畫面先留上一筆）";
+    var cs = document.querySelectorAll(".card");
+    for (var i = 0; i < cs.length; i++) cs[i].classList.add("stale");
+    return;
+  }
+  $("errVal").textContent = "";
+  var cs2 = document.querySelectorAll(".card");
+  for (var j = 0; j < cs2.length; j++) cs2[j].classList.remove("stale");
+  last = d;
+  setBig("v-temp", d.temp, "°C", isNum(d.temp) && d.temp % 1 ? 1 : 0);
+  setBig("v-hum", d.hum, "%");
+  setBig("v-light", d.light); setBar("b-light", d.light);
+  setBig("v-knob", d.knob); setBar("b-knob", d.knob);
+  setLed("red", d.red); setLed("yellow", d.yellow); setLed("green", d.green);
+  setRgb(d.rgb);
+  setBig("v-req", d.requests);
+  var reqNa = !isNum(d.requests) && info.link !== "wifi" && info.link !== null;
+  $("c-req").classList.toggle("na", reqNa);
+  $("c-req").querySelector(".na-msg").textContent = reqNa ? naText() : "";
+  setBig("v-rtt", d.rtt_ms, "ms", isNum(d.rtt_ms) && d.rtt_ms < 100 ? 1 : 0);
+  if (isNum(d.rtt_ms)){ rtts.push(d.rtt_ms); if (rtts.length > 60) rtts.shift(); }
+  if (activeTab === "dash") drawChart();
+}
+setInterval(function(){
+  if (!lastAt){ return; }
+  var s = (Date.now() - lastAt) / 1000;
+  var txt = s < 2 ? "剛剛更新" : Math.floor(s) + " 秒前更新";
+  if (s >= 5 && game.state === "run" && info.link !== "wifi") txt += "（遊戲中，藍牙線暫停讀溫溼度）";
+  else if (s >= 5) txt += "（太久沒新資料）";
+  $("ageVal").textContent = txt;
+}, 500);
+
+function onButton(d){
+  if (d.down === false) return;
+  btnCount++;
+  var b = $("v-btn"); b.textContent = "剛按下"; b.classList.add("hit");
+  clearTimeout(onButton._t); onButton._t = setTimeout(function(){ b.textContent = "放開"; b.classList.remove("hit"); }, 350);
+  $("v-btncount").textContent = "按下 " + btnCount + " 次";
+  if (activeTab === "game") jump("esp");
+}
+var FX_NAME = { start:"開始（綠燈亮）", score:"得分（彩色燈閃）", over:"撞到（紅燈亮＋嗶）" };
+function onFx(d){
+  var n = FX_NAME[d.name] || String(d.name);
+  $("fxlog").textContent = (d.sent === false ? "回饋沒送到 ESP32：" : "回饋已送到 ESP32：") + n;
+}
+
+/* ---------- SSE ---------- */
+var es = null;
+function connect(){
+  try { es = new EventSource("/events"); } catch(e){ $("lost").classList.add("show"); return; }
+  es.onopen = function(){ $("lost").classList.remove("show"); $("dot").className = "dot on"; };
+  es.onerror = function(){ $("lost").classList.add("show"); $("dot").className = "dot bad"; };
+  es.onmessage = function(ev){
+    var d;
+    try { d = JSON.parse(ev.data); } catch(e){ return; }
+    if (!d || typeof d !== "object") return;
+    if (d.type === "hello"){
+      info.link = d.link || null; info.target = d.target || null;
+      info.has = (d.has && typeof d.has === "object") ? d.has : {};
+      $("linkText").textContent = (LINK_NAME[info.link] || info.link || "?") + " → " + (info.target || "?");
+      applyHas();
+    } else if (d.type === "sensors") onSensors(d);
+    else if (d.type === "button") onButton(d);
+    else if (d.type === "fx") onFx(d);
+  };
+}
+connect();
+
+function fx(name){
+  try { fetch("/fx?name=" + encodeURIComponent(name), { cache:"no-store" }).catch(function(){}); } catch(e){}
+}
+
+/* ---------- 遊戲 ---------- */
+var cv = $("game"), g = cv.getContext("2d");
+var LW = 800, LH = 300, GROUND = 246;
+var best = 0;
+try { best = parseInt(localStorage.getItem("w12-best") || "0", 10) || 0; } catch(e){}
+$("g-best").textContent = best;
+var WHO = { esp:"ESP32 A 鍵", key:"鍵盤空白鍵", tap:"點畫面" };
+var game = { state:"ready", paused:false, y:0, vy:0, obs:[], score:0, speed:300, dist:0, nextGap:420, last:0, overAt:0, scroll:0 };
+var PLAYER = { x:90, w:46, h:34 };
+window.__w12game = game; /* 除錯用：在主控台看 __w12game */
+var G = 2300, JUMP = 760;
+
+var FONT = "sans-serif";
+function fitCanvas(){
+  /* 只在分頁打開、視窗改大小時量一次；每一格都量會拖慢畫面 */
+  var dpr = window.devicePixelRatio || 1;
+  var w = cv.clientWidth || LW;
+  var pw = Math.round(w * dpr), ph = Math.round(w * LH / LW * dpr);
+  if (cv.width !== pw || cv.height !== ph){ cv.width = pw; cv.height = ph; }
+  FONT = getComputedStyle(document.body).fontFamily;
+}
+function reset(){
+  game.y = 0; game.vy = 0; game.obs = []; game.score = 0; game.speed = 260; game.dist = 0; game.nextGap = 380;
+  $("g-score").textContent = "0";
+}
+function jump(src){
+  $("g-who").textContent = WHO[src] || src;
+  if (game.state === "ready"){ start(); }
+  else if (game.state === "over"){ if (performance.now() - game.overAt > 600) start(); return; }
+  if (game.paused){ resumeGame(true); }
+  if (game.y === 0 && game.state === "run") game.vy = JUMP;
+}
+function start(){
+  fitCanvas();
+  reset(); game.state = "run"; game.paused = false; fx("start");
+  game.last = 0; requestAnimationFrame(loop);
+}
+function over(){
+  game.state = "over"; game.overAt = performance.now(); fx("over");
+  if (game.score > best){ best = game.score; $("g-best").textContent = best; try { localStorage.setItem("w12-best", String(best)); } catch(e){} }
+  draw();
+}
+function pauseGame(){ if (game.state === "run") { game.paused = true; draw(); } }
+function resumeGame(force){
+  if (activeTab !== "game" || document.hidden) return;
+  fitCanvas();
+  if (game.state === "run" && game.paused && force){ game.paused = false; game.last = 0; requestAnimationFrame(loop); }
+  draw();
+}
+document.addEventListener("visibilitychange", function(){ if (document.hidden) pauseGame(); });
+
+var KINDS = ["res","cap","chip","elec"];
+function spawn(){
+  var k = KINDS[Math.floor(Math.random() * (game.score < 3 ? 2 : KINDS.length))];
+  var o = { kind:k, x:LW + 20, passed:false };
+  if (k === "res"){ o.w = 54; o.h = 22; }
+  else if (k === "cap"){ o.w = 24; o.h = 40; }
+  else if (k === "chip"){ o.w = 46; o.h = 30; }
+  else { o.w = 30; o.h = 58; }
+  game.obs.push(o);
+}
+function loop(now){
+  if (game.state !== "run" || game.paused) return;
+  if (!game.last) game.last = now;
+  var dt = Math.min(0.05, (now - game.last) / 1000);
+  game.last = now;
+  // 物理：以秒為單位，跟螢幕更新率無關
+  game.speed = Math.min(560, 260 + game.score * 10);
+  var dx = game.speed * dt;
+  game.scroll = (game.scroll + dx) % 40;
+  game.vy -= G * dt; game.y += game.vy * dt;
+  if (game.y <= 0){ game.y = 0; game.vy = 0; }
+  game.dist += dx;
+  if (game.dist >= game.nextGap){
+    game.dist = 0; spawn();
+    var minGap = 260 + game.speed * 0.35;
+    game.nextGap = minGap + Math.random() * 300;
+  }
+  var px = PLAYER.x, pb = GROUND - game.y, pt = pb - PLAYER.h;
+  for (var i = game.obs.length - 1; i >= 0; i--){
+    var o = game.obs[i];
+    o.x -= dx;
+    if (o.x + o.w < -20){ game.obs.splice(i,1); continue; }
+    // 碰撞（框各縮 5 像素，比較寬容）
+    if (px + PLAYER.w - 5 > o.x + 5 && px + 5 < o.x + o.w - 5 && pb - 3 > GROUND - o.h + 5){ over(); return; }
+    if (!o.passed && o.x + o.w < px){
+      o.passed = true; game.score++;
+      $("g-score").textContent = game.score;
+      if (game.score % 5 === 0) fx("score");
+    }
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+
+function rr(x, y, w, h, r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
+function drawPlayer(x, yb){
+  var w = PLAYER.w, h = PLAYER.h, y = yb - h;
+  // 腳（排針）
+  g.fillStyle = "#C9A23A";
+  for (var i = 0; i < 4; i++) g.fillRect(x + 6 + i * 10, yb - 2, 4, 6);
+  rr(x, y, w, h - 2, 5); g.fillStyle = C["--pcb"]; g.fill();
+  g.lineWidth = 2; g.strokeStyle = C["--pcb-edge"]; g.stroke();
+  // 晶片
+  g.fillStyle = "#1E2426"; g.fillRect(x + 8, y + 7, 16, 14);
+  g.fillStyle = "#9AA5A6"; for (var j = 0; j < 3; j++){ g.fillRect(x + 6, y + 9 + j * 4, 2, 2); g.fillRect(x + 24, y + 9 + j * 4, 2, 2); }
+  // 走線
+  g.strokeStyle = "#D9B44A"; g.lineWidth = 1.5;
+  g.beginPath(); g.moveTo(x + 26, y + 14); g.lineTo(x + 34, y + 14); g.lineTo(x + 34, y + 8); g.stroke();
+  // 指示燈（眼睛）
+  g.fillStyle = game.state === "over" ? "#E0443A" : "#7CF2A8";
+  g.beginPath(); g.arc(x + 37, y + 9, 3.5, 0, Math.PI * 2); g.fill();
+  // 天線
+  g.strokeStyle = C["--pcb-edge"]; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(x + 40, y); g.lineTo(x + 40, y - 7); g.stroke();
+}
+function drawObs(o){
+  var x = o.x, yb = GROUND, y = yb - o.h;
+  if (o.kind === "res"){
+    g.strokeStyle = "#8E9799"; g.lineWidth = 3;
+    g.beginPath(); g.moveTo(x, yb - 9); g.lineTo(x + o.w, yb - 9); g.stroke();
+    g.beginPath(); g.moveTo(x + 2, yb - 9); g.lineTo(x + 2, yb); g.moveTo(x + o.w - 2, yb - 9); g.lineTo(x + o.w - 2, yb); g.stroke();
+    rr(x + 10, y, o.w - 20, 18, 6); g.fillStyle = "#D8BE8C"; g.fill();
+    var bands = ["#7A4A1E","#111","#C0392B","#C9A23A"];
+    for (var i = 0; i < 4; i++){ g.fillStyle = bands[i]; g.fillRect(x + 15 + i * 7, y, 3.5, 18); }
+  } else if (o.kind === "cap"){
+    g.strokeStyle = "#8E9799"; g.lineWidth = 3;
+    g.beginPath(); g.moveTo(x + 8, yb - 12); g.lineTo(x + 8, yb); g.moveTo(x + 16, yb - 12); g.lineTo(x + 16, yb); g.stroke();
+    g.fillStyle = "#E39B3B"; g.beginPath(); g.ellipse(x + o.w/2, y + 14, o.w/2, 14, 0, 0, Math.PI * 2); g.fill();
+  } else if (o.kind === "chip"){
+    g.fillStyle = "#9AA5A6";
+    for (var k = 0; k < 4; k++){ g.fillRect(x + 6 + k * 10, y - 4, 4, 5); g.fillRect(x + 6 + k * 10, yb - 2, 4, 2); }
+    g.fillStyle = "#1E2426"; g.fillRect(x, y, o.w, o.h - 2);
+    g.fillStyle = "#4A5456"; g.beginPath(); g.arc(x + 7, y + 7, 3, 0, Math.PI * 2); g.fill();
+  } else {
+    g.strokeStyle = "#8E9799"; g.lineWidth = 3;
+    g.beginPath(); g.moveTo(x + 10, yb - 6); g.lineTo(x + 10, yb); g.moveTo(x + 20, yb - 6); g.lineTo(x + 20, yb); g.stroke();
+    rr(x, y, o.w, o.h - 6, 6); g.fillStyle = "#2F5FA8"; g.fill();
+    g.fillStyle = "#C9D6EE"; g.fillRect(x + o.w - 9, y + 4, 5, o.h - 14);
+    g.fillStyle = "#8FA6CF"; g.fillRect(x, y + 6, o.w, 3);
+  }
+}
+function draw(){
+  var s = cv.width / LW;
+  g.setTransform(s, 0, 0, s, 0, 0);
+  g.fillStyle = C["--sky"]; g.fillRect(0, 0, LW, LH);
+  // 地面：電路板走線
+  g.fillStyle = C["--surface-2"]; g.fillRect(0, GROUND, LW, LH - GROUND);
+  g.strokeStyle = C["--line"]; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(0, GROUND); g.lineTo(LW, GROUND); g.stroke();
+  g.strokeStyle = C["--gold"]; g.globalAlpha = .45; g.lineWidth = 2;
+  for (var x = -game.scroll; x < LW; x += 40){
+    g.beginPath(); g.moveTo(x, GROUND + 14); g.lineTo(x + 22, GROUND + 14); g.lineTo(x + 30, GROUND + 26); g.stroke();
+    g.beginPath(); g.arc(x + 30, GROUND + 26, 3, 0, Math.PI * 2); g.stroke();
+  }
+  g.globalAlpha = 1;
+  game.obs.forEach(drawObs);
+  drawPlayer(PLAYER.x, GROUND - game.y);
+  g.textAlign = "center"; g.textBaseline = "middle";
+  var font = FONT;
+  if (game.state !== "run" || game.paused){
+    g.fillStyle = C["--bg"]; g.globalAlpha = .82; rr(170, 56, 460, 120, 16); g.fill(); g.globalAlpha = 1;
+    g.fillStyle = C["--ink"]; g.font = "900 34px " + font;
+    var t1 = game.state === "ready" ? "按一下開始" : game.state === "over" ? "撞到了！得 " + game.score + " 分" : "暫停中";
+    g.fillText(t1, LW / 2, 100);
+    g.font = "700 20px " + font; g.fillStyle = C["--mist"];
+    g.fillText(game.state === "over" ? "再按一下重來" : "A 鍵、空白鍵、點畫面都可以", LW / 2, 145);
+  }
+}
+document.addEventListener("keydown", function(e){
+  if (activeTab !== "game") return;
+  if (e.code === "Space" || e.key === " "){ e.preventDefault(); if (!e.repeat) jump("key"); }
+});
+cv.addEventListener("pointerdown", function(e){ e.preventDefault(); jump("tap"); });
+window.addEventListener("resize", function(){ if (activeTab === "game"){ fitCanvas(); draw(); } });
+fitCanvas(); draw();
+drawChart();
+})();
+</script>
+</body>
+</html>
