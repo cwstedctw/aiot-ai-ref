@@ -119,6 +119,8 @@ curl -sS --max-time 5 http://127.0.0.1:8090/api/party
 curl -sS --max-time 5 "http://127.0.0.1:8090/api/led?name=red&on=1"
 ```
 
+Windows PowerShell 要把 `curl` 打成 **`curl.exe`**（PowerShell 5.1 裡的 `curl` 是另一個指令，上面的參數它看不懂）。
+
 新網址、原本的網址都要回 JSON（第二條確認你沒弄壞大腦要用的網址）。測完在跑模擬器的視窗按 Ctrl+C。〔模擬：上面的 `/api/party` 範例在 mbp 上這樣跑過，模擬器印出 `[HW] rgb [(255, 0, 255), …]`、`[HW] buzzer 1046 Hz`、`[HW] buzzer 1318 Hz`〕
 
 模擬器的限制：
