@@ -12,7 +12,7 @@
 請先讀 https://github.com/cwstedctw/aiot-ai-ref 的 AGENTS.md 和 w12/README.md，照裡面的規則幫我：＿＿＿＿
 ```
 
-例如：「看懂這段錯誤訊息（貼上整段）」「我想讓濕度高的時候亮黃燈，rules.py 要改哪裡」「為什麼藍牙掃不到我的 ESP32」。
+例如：「看懂這段錯誤訊息（貼上整段，密碼先刪掉）」「我想讓濕度高的時候亮黃燈，rules.py 要改哪裡」「為什麼藍牙掃不到我的 ESP32」。
 
 **2. 下載到筆電**，用 Antigravity 開這個資料夾：
 
