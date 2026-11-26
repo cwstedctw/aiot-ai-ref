@@ -12,7 +12,9 @@
 請先讀 https://github.com/cwstedctw/aiot-ai-ref 的 AGENTS.md 和 w12/README.md，照裡面的規則幫我：＿＿＿＿
 ```
 
-例如：「看懂這段錯誤訊息（貼上整段，密碼先刪掉）」「我想讓濕度高的時候亮黃燈，rules.py 要改哪裡」「為什麼藍牙掃不到我的 ESP32」「幫我一步一步檢查這塊 ESP32 是不是好的（讀 [w12/esp32/README.md](w12/esp32/README.md)）」。
+例如：「看懂這段錯誤訊息（貼上整段，密碼先刪掉）」「我想讓濕度高的時候亮黃燈，rules.py 要改哪裡」「為什麼藍牙掃不到我的 ESP32」「幫我一步一步檢查這塊 ESP32 是不是好的（讀 [w12/esp32/README.md](w12/esp32/README.md)）」「我想讓 ESP32 多做一件事，幫我改程式（讀 [w12/esp32/rewrite.md](w12/esp32/rewrite.md)）」。
+
+改 ESP32 程式要在**接著 ESP32 的電腦**上做（裝工具、上傳），而且**交給下一組之前一定要還原成 W12 選單**，步驟都在 `rewrite.md`。
 
 **2. 下載到筆電**，用 Antigravity 開這個資料夾：
 
